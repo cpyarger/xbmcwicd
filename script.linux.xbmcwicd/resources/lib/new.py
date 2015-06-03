@@ -62,78 +62,99 @@ if not daemon:
     sys.exit(3)
 
 
+def check_nm(self):
+    try:
+        import dbus
+    except:
+        # dbus not available
+        err = 30130
+        return False, err
+
+    try:
+        bus = dbus.SystemBus()
+    except:
+        # could not connect to dbus
+        err =  30131
+        return False, err
+
+    try:
+        nm_proxy = bus.get_object("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager")
+        nm_iface = dbus.Interface(nm_proxy, "org.freedesktop.NetworkManager")
+    except:
+        # could not connect to network-manager
+        err = 30132
+        return False, err
+
+    return True, ''
 
 # Test Cases
+def numOfNetworks():
+    print ("Number of networks: " )
+    print( wireless.GetNumberOfNetworks())
+def wiredProfileList():
+    print ("Wired Profile list: " )
+    print( wired.GetWiredProfileList())
 
-print ("Number of networks: " )
-print( wireless.GetNumberOfNetworks())
-print ("Wired Profile list: " )
-print( wired.GetWiredProfileList())
+def getWirelessNetworks():
+    print '#\tBSSID\t\t\tChannel\tESSID'
+    for network_id in range(0, wireless.GetNumberOfNetworks()):
+        print '%s\t%s\t%s\t%s' % (network_id,
+        wireless.GetWirelessProperty(network_id, 'bssid'),
+        wireless.GetWirelessProperty(network_id, 'channel'),
+        wireless.GetWirelessProperty(network_id, 'essid'))
 
-
-print '#\tBSSID\t\t\tChannel\tESSID'
-for network_id in range(0, wireless.GetNumberOfNetworks()):
-	print '%s\t%s\t%s\t%s' % (network_id,
-	wireless.GetWirelessProperty(network_id, 'bssid'),
-	wireless.GetWirelessProperty(network_id, 'channel'),
-	wireless.GetWirelessProperty(network_id, 'essid'))
-check = None
-
-
-name = wireless.GetWirelessProperty(0, 'essid')
-encryption = wireless.GetWirelessProperty(0, 'enctype')
-print "Connecting to %s with %s on %s" % (name, encryption,
-	wireless.DetectWirelessInterface())
-wireless.ConnectWireless(0)
-
-
-last = None
-if check:
-	while check():
-		next_ = status()
-		if next_ != last:
-			# avoid a race condition where status is updated to "done" after
-			# the loop check
-			if next_ == "done":
-				break
-	print message()
-	last = next_
-print "done!"
-
-op_performed = True
+def connectToWireless(netid):
+    check = None
+    last = None
+    name = wireless.GetWirelessProperty(netid, 'essid')
+    encryption = wireless.GetWirelessProperty(netid, 'enctype')
+    print "Connecting to %s with %s on %s" % (name, encryption, wireless.DetectWirelessInterface())
+    wireless.ConnectWireless(netid)
+    if check:
+    	while check():
+    		next_ = status()
+    		if next_ != last:
+    			# avoid a race condition where status is updated to "done" after
+    			# the loop check
+    			if next_ == "done":
+    				break
+    	print message()
+    	last = next_
+    print "done!"
 
 
 
-status, info = daemon.GetConnectionStatus()
-if status in (misc.WIRED, misc.WIRELESS):
-	connected = True
-	status_msg = _('Connected')
-	if status == misc.WIRED:
-		conn_type = _('Wired')
-	else:
-		conn_type = _('Wireless')
-else:
-	connected = False
-	status_msg = misc._const_status_dict[status]
+def getNetworkStatus():
+    status, info = daemon.GetConnectionStatus()
+    if status in (misc.WIRED, misc.WIRELESS):
+    	connected = True
+    	status_msg = _('Connected')
+    	if status == misc.WIRED:
+    		conn_type = _('Wired')
+    	else:
+    		conn_type = _('Wireless')
+    else:
+    	connected = False
+    	status_msg = misc._const_status_dict[status]
 
-print _('Connection status') + ': ' + status_msg
-if connected:
-	print _('Connection type') + ': ' + conn_type
-	if status == misc.WIRELESS:
-		strength = daemon.FormatSignalForPrinting(info[2])
-		print _('Connected to $A at $B (IP: $C)') \
-		.replace('$A', info[1]) \
-		.replace('$B', strength) \
-		.replace('$C', info[0])
-		print _('Network ID: $A') \
-		.replace('$A', info[3])
-	else:
-		print _('Connected to wired network (IP: $A)') \
-		.replace('$A', info[0])
-else:
-	if status == misc.CONNECTING:
-		if info[0] == 'wired':
-			print _('Connecting to wired network.')
-		elif info[0] == 'wireless':
-			print _('Connecting to wireless network "$A".') \
-			.replace('$A', info[1])
+    print _('Connection status') + ': ' + status_msg
+    if connected:
+    	print _('Connection type') + ': ' + conn_type
+    	if status == misc.WIRELESS:
+    		strength = daemon.FormatSignalForPrinting(info[2])
+    		print _('Connected to $A at $B (IP: $C)') \
+    		.replace('$A', info[1]) \
+    		.replace('$B', strength) \
+    		.replace('$C', info[0])
+    		print _('Network ID: $A') \
+    		.replace('$A', info[3])
+    	else:
+    		print _('Connected to wired network (IP: $A)') \
+    		.replace('$A', info[0])
+    else:
+    	if status == misc.CONNECTING:
+    		if info[0] == 'wired':
+    			print _('Connecting to wired network.')
+    		elif info[0] == 'wireless':
+    			print _('Connecting to wireless network "$A".') \
+    			.replace('$A', info[1])
