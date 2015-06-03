@@ -158,3 +158,6 @@ def getNetworkStatus():
     		elif info[0] == 'wireless':
     			print _('Connecting to wireless network "$A".') \
     			.replace('$A', info[1])
+#getNetworkStatus()
+getWirelessNetworks()
+#connectToWireless(1)
