@@ -65,4 +65,5 @@ if not daemon:
 
 # Test Cases
 
-print ("Number of networks: " + wireless.GetNumberOfNetworks())
+print ("Number of networks: " )
+print( wireless.GetNumberOfNetworks())
