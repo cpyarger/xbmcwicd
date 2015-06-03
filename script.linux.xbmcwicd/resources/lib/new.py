@@ -23,7 +23,7 @@ import sys
 from wicd import misc
 from wicd.translations import _
 
-misc.RenameProcess('wicd-cli')
+misc.RenameProcess('xbmc-wicd')
 
 exit_status = 0
 
@@ -60,3 +60,9 @@ if not daemon:
     print 'Error connecting to wicd via D-Bus. ' + \
         'Please make sure the wicd service is running.'
     sys.exit(3)
+
+
+
+# Test Cases
+
+print ("Number of networks: " + wireless.GetNumberOfNetworks())
