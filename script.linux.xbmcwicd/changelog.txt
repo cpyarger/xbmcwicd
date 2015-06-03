@@ -1,3 +1,6 @@
+[B]Version 0.1[/B]
+Change from NM to WICD
+
 [B]Version 1.0.3[/B]
 Wrong script.linux.nm1-add.xml reference in gui.py
 changed to script_linux_nm1-add.xml.
@@ -45,5 +48,3 @@ Disconnect, connect, delete and cancel added
 
 [B]Version 0.0.1[/B]
 Initial version, converted from wicd and the old wireless.manager
-
-
