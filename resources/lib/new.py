@@ -179,11 +179,21 @@ def deactive_wifi():
 def delete_connection(uuid):
     print("delete_connection")
     print(uuid)
+
 def get_connections():
     print("get_connections")
+    connection_list = []
+    for network_id in range(0, wireless.GetNumberOfNetworks()):
+        connection_dict = {}
+        connection_dict['uuid'] = wireless.GetWirelessProperty(network_id, 'bssid')
+        connection_dict['id'] = network_id
+        connection_dict['ssid'] = wireless.GetWirelessProperty(network_id, 'essid')
+        connection_list.append(connection_dict)
+    return (connection_list)
 
 
 
 #getNetworkStatus()
-getWirelessNetworks()
+#getWirelessNetworks()
 #connectToWireless(1)
+print(get_connections())

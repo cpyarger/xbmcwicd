@@ -5,7 +5,12 @@ import xbmcgui
 #import qfpynm
 import time
 import new
+import optparse
+import dbus
+import dbus.service
 
+from wicd import misc
+from wicd.translations import _
 #enable localization
 getLS   = sys.modules[ "__main__" ].__language__
 __cwd__ = sys.modules[ "__main__" ].__cwd__
@@ -16,7 +21,59 @@ __cwd__ = sys.modules[ "__main__" ].__cwd__
 #TODO Display network detail window
 #TODO Create a new con name if name=ssid is taken
 #TODO the > only indicates active connection. would be nice to show connectivity status as well
+if getattr(dbus, 'version', (0, 0, 0)) < (0, 80, 0):
+    import dbus.glib
+else:
+    from dbus.mainloop.glib import DBusGMainLoop
+    DBusGMainLoop(set_as_default=True)
 
+bus = dbus.SystemBus()
+try:
+    daemon = dbus.Interface(
+        bus.get_object('org.wicd.daemon', '/org/wicd/daemon'),
+        'org.wicd.daemon'
+    )
+    wireless = dbus.Interface(
+        bus.get_object('org.wicd.daemon', '/org/wicd/daemon/wireless'),
+        'org.wicd.daemon.wireless'
+    )
+    wired = dbus.Interface(
+        bus.get_object('org.wicd.daemon', '/org/wicd/daemon/wired'),
+        'org.wicd.daemon.wired'
+    )
+    config = dbus.Interface(
+        bus.get_object('org.wicd.daemon', '/org/wicd/daemon/config'),
+        'org.wicd.daemon.config'
+    )
+except dbus.DBusException:
+    print 'Error: Could not connect to the daemon. ' + \
+        'Please make sure it is running.'
+    sys.exit(3)
+
+if not daemon:
+    print 'Error connecting to wicd via D-Bus. ' + \
+        'Please make sure the wicd service is running.'
+    sys.exit(3)
+
+def getWirelessNetworks():
+    print '#\tBSSID\t\t\tChannel\tESSID'
+    for network_id in range(0, wireless.GetNumberOfNetworks()):
+        print '%s\t%s\t%s\t%s' % (network_id,
+        wireless.GetWirelessProperty(network_id, 'bssid'),
+        wireless.GetWirelessProperty(network_id, 'channel'),
+        wireless.GetWirelessProperty(network_id, 'essid'))
+    return int(wireless.GetNumberOfNetworks())
+
+def get_connections():
+    print("get_connections")
+    connection_list = []
+    for network_id in range(0, wireless.GetNumberOfNetworks()):
+        connection_dict = {}
+        connection_dict['uuid'] = wireless.GetWirelessProperty(network_id, 'bssid')
+        connection_dict['id'] = network_id
+        connection_dict['ssid'] = wireless.GetWirelessProperty(network_id, 'essid')
+        connection_list.append(connection_dict)
+    return (connection_list)
 
 class GUI(xbmcgui.WindowXMLDialog):
 
@@ -37,7 +94,7 @@ class GUI(xbmcgui.WindowXMLDialog):
         if self.first == True:
             nm_OK, err = self.check_nm()
             if nm_OK == True:
-                devlist = new.getWirelessNetworks()
+                devlist = getWirelessNetworks()
                 if len(devlist) > 1:
                     self.msg = getLS(30127)
                 elif len(devlist) == 0:
@@ -103,6 +160,7 @@ class GUI(xbmcgui.WindowXMLDialog):
         self.status_label       = self.getControl(self.control_status_label_id)
 
     def showDialog(self):
+        print("showDialog")
         self.updateList()
         #state,stateTXT = new.get_nm_state()
         #msg = stateTXT
@@ -236,20 +294,12 @@ class GUI(xbmcgui.WindowXMLDialog):
 
     def updateList(self):
         print "updating list"
-        self.list.reset()
-
-        connection_list = new.get_connections()
+        #self.list.reset()
+        print(get_connections())
+        connection_list = get_connections()
 
         for  connection_dict in connection_list:
-            if connection_dict['active']== True:
-                sts = ">"
-            elif connection_dict['auto'] == 1:
-                sts = "a"
-            else:
-                sts = ""
-
-            item = xbmcgui.ListItem (label=sts, label2 = connection_dict['id'])
+            item = xbmcgui.ListItem (label=str(connection_dict['id']))
             item.setProperty('ssid',connection_dict['ssid'])
             item.setProperty('uuid',connection_dict['uuid'])
-            item.setProperty('encryption',connection_dict['encryption'])
             self.list.addItem(item)
