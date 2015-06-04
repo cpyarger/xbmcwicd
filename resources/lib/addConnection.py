@@ -1,7 +1,8 @@
 import xbmc
 import xbmcaddon
 import xbmcgui
-import qfpynm
+#import new
+import new
 import time
 import sys
 
@@ -155,7 +156,7 @@ class GUI(xbmcgui.WindowXMLDialog):
             kb.doModal()
             if (kb.isConfirmed()):
                 key=kb.getText()
-                errors = qfpynm.validate_wifi_input(key,encryption)
+                errors = new.validate_wifi_input(key,encryption)
 
             if key == "" or errors != '':
                 self.msg = getLS(30109)
@@ -166,14 +167,14 @@ class GUI(xbmcgui.WindowXMLDialog):
         else:
             wep_alg = ''
         if connection_created == False:
-            con_path = qfpynm.add_wifi(ssid,key,encryption,wep_alg,self.disable_ipv6 )
+            con_path = new.add_wifi(ssid,key,encryption,wep_alg,self.disable_ipv6 )
         else:
-            aUUID = qfpynm.get_con_uuid_by_path(con_path)
-            qfpynm.update_wifi(aUUID, key, encryption)
-            qfpynm.activate_connection(aUUID)
+            aUUID = new.get_con_uuid_by_path(con_path)
+            new.update_wifi(aUUID, key, encryption)
+            new.activate_connection(aUUID)
 
         for i in range(1, 150):
-            state,stateTXT = qfpynm.get_device_state(qfpynm.get_wifi_device())
+            state,stateTXT = new.get_device_state(new.get_wifi_device())
             self.msg = stateTXT
             self.status_label.setLabel(self.msg)
             # Do not exit directly just to be sure.
@@ -203,8 +204,8 @@ class GUI(xbmcgui.WindowXMLDialog):
         print "updating list"
         self.list.reset()
 
-        #qfpynm.scan_wireless()
-        wlessL = qfpynm.get_wireless_networks()
+        #new.scan_wireless()
+        wlessL = new.get_wireless_networks()
         for net_dict in wlessL:
             if net_dict['connected'] == True:
                 sts = '>'
